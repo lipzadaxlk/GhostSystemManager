@@ -17,7 +17,8 @@ std::wstring findDeviceInterface() {
 ClientResult queryDriver(const std::wstring& devicePath, HWID_DIAGNOSTICS* diagnostics, HWID_SYNTHETIC_IDENTITY* identity) {
     HANDLE device=CreateFileW(devicePath.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr); if(device==INVALID_HANDLE_VALUE){auto e=GetLastError();return{false,e,errorText(e)};}
     DWORD returned=0; bool ok=DeviceIoControl(device,IOCTL_HWID_GET_DIAGNOSTICS,nullptr,0,diagnostics,sizeof(*diagnostics),&returned,nullptr) != FALSE;
-    if(ok) ok=DeviceIoControl(device,IOCTL_HWID_GET_SYNTHETIC_IDENTITY,nullptr,0,identity,sizeof(*identity),&returned,nullptr) != FALSE;
+    HWID_IDENTITY_REQUEST request{}; request.size=sizeof(request); request.version=HWID_PROTOCOL_VERSION; request.profileSeed=0x4857494452455345ULL;
+    if(ok) ok=DeviceIoControl(device,IOCTL_HWID_GET_SYNTHETIC_IDENTITY,&request,sizeof(request),identity,sizeof(*identity),&returned,nullptr) != FALSE;
     const auto e=ok?ERROR_SUCCESS:GetLastError(); CloseHandle(device); return {ok,e,ok?L"Driver diagnostics and synthetic identity received.":errorText(e)};
 }
 

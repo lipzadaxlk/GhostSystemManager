@@ -13,6 +13,17 @@ VOID HwidEvtIoDeviceControl(WDFQUEUE queue, WDFREQUEST request, size_t outputLen
     }
     PVOID buffer = NULL;
     size_t length = 0;
+    if (code == IOCTL_HWID_GET_SYNTHETIC_IDENTITY) {
+        PVOID input = NULL;
+        size_t inputSize = 0;
+        NTSTATUS inputStatus = WdfRequestRetrieveInputBuffer(request, sizeof(HWID_IDENTITY_REQUEST), &input, &inputSize);
+        if (!NT_SUCCESS(inputStatus)) { WdfRequestComplete(request, inputStatus); return; }
+        HWID_IDENTITY_REQUEST* identityRequest = (HWID_IDENTITY_REQUEST*)input;
+        if (identityRequest->size != sizeof(HWID_IDENTITY_REQUEST) || identityRequest->version != HWID_PROTOCOL_VERSION) {
+            WdfRequestComplete(request, STATUS_REVISION_MISMATCH);
+            return;
+        }
+    }
     NTSTATUS status = WdfRequestRetrieveOutputBuffer(request, required, &buffer, &length);
     if (!NT_SUCCESS(status)) { WdfRequestComplete(request, status); return; }
     RtlZeroMemory(buffer, required);

@@ -5,6 +5,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration"><DriverType>KMDF</DriverType><ConfigurationType>Driver</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries></PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration"><DriverType>KMDF</DriverType><ConfigurationType>Driver</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
+  <PropertyGroup><DriverTargetPlatform>Desktop</DriverTargetPlatform><KMDFVersion>1.33</KMDFVersion><TargetVersion>10.0.26100.0</TargetVersion></PropertyGroup>
+  <ItemDefinitionGroup><ClCompile><PreprocessorDefinitions>_KERNEL_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup><ClCompile Include="Driver.c" /><ClCompile Include="Device.c" /><ClCompile Include="Ioctl.c" /></ItemGroup>
   <ItemGroup><ClInclude Include="Driver.h" /><ClInclude Include="..\Shared\Protocol.h" /></ItemGroup>
