@@ -12,6 +12,10 @@ O driver não altera SMBIOS, UUID, discos, MAC, firmware, Registro ou estruturas
 
 O hipervisor deve ser configurado explicitamente pelo operador, usando somente sua documentação. Exemplos de preparação em uma VM descartável: gerar um novo UUID da VM, criar um novo disco virtual, gerar um novo MAC virtual e instalar o Windows novamente. O projeto não executa esses comandos automaticamente e não altera a VM do host.
 
+## Modo físico Windows
+
+O hypervisor é opcional. Em computadores físicos, use o aplicativo principal Ghost System Manager: o fluxo `APPLY IDENTITY` gera e aplica somente a propriedade lógica `NetworkAddress` quando o driver do adaptador a expõe, grava backup automaticamente e verifica o MAC ativo com `GetAdaptersAddresses`. UUID, BIOS, TPM, placa-mãe, CPU/GPU, serial de disco, volumes e MachineGuid permanecem somente leitura. Se o driver não aceitar a propriedade, o resultado é `PARTIAL` ou falha, nunca sucesso fictício.
+
 ## Estado do ambiente
 
 O computador de desenvolvimento possui Windows SDK, MSVC e CMake, mas não possui o WDK/KMDF instalado. Por isso, o código e o projeto `Driver/HWIDResearch.vcxproj` estão preparados para compilação em uma VM de testes com WDK, enquanto os componentes user-mode são compiláveis localmente.

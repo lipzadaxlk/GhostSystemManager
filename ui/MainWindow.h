@@ -20,6 +20,7 @@ private:
     void checkCompatibility();
     void generateConfiguration();
     void applyChanges();
+    void applyIdentityOneClick();
     void verifyChanges();
     void backupConfiguration();
     void restoreConfiguration();
