@@ -1,0 +1,15 @@
+build/
+release/*.exe
+release/*.dll
+release/*.json
+release/generic/
+release/iconengines/
+release/imageformats/
+release/networkinformation/
+release/platforms/
+release/styles/
+release/tls/
+installer/*.exe
+installer/*.rar
+*.user
+*.log
