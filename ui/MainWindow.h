@@ -3,6 +3,7 @@
 #include "AppTypes.h"
 #include "HardwareInventory.h"
 #include "OperationLogger.h"
+#include "SnapshotStore.h"
 #include <QMainWindow>
 
 class QComboBox;
@@ -25,11 +26,13 @@ private:
     void viewLogs();
     void showRecords(const std::vector<IdentityRecord>& records);
     QString backupPath() const;
+    QString snapshotPath() const;
     HardwareInventory inventory_;
     OperationLogger logger_;
     QString rootPath_;
     std::vector<IdentityRecord> records_;
     ChangePlan plan_;
+    SystemSnapshot beforeSnapshot_;
     QTableWidget* table_ = nullptr;
     QComboBox* adapters_ = nullptr;
     QTextEdit* status_ = nullptr;

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "NetworkConfiguration.h"
+#include "PersistenceVerification.h"
 
 #include <QComboBox>
 #include <QFrame>
@@ -35,12 +36,32 @@ MainWindow::MainWindow(const QString& rootPath, QWidget* parent) : QMainWindow(p
     setStyleSheet("QMainWindow,QWidget { background:#090a0d; color:#eeeaf4; font-family:'Segoe UI'; } #rail { background:#0d0f14; border-right:1px solid #24242d; } #mark { color:#ff6b3d; font-size:24px; font-weight:900; padding:8px; } QPushButton { background:#151820; color:#aaa6b6; border:1px solid #282b35; border-radius:6px; padding:9px 12px; font-size:10px; font-weight:700; } QPushButton:hover { border-color:#ff6b3d; color:#fff; } #selectedRail { background:#3a201b; border-color:#ff6b3d; color:#ff9b79; } #primary { background:#bd4c2c; color:white; border-color:#f57d59; } #logo { color:#ff6b3d; font-size:18px; font-weight:900; letter-spacing:2px; } #logo span { color:#63d07f; } #connected { color:#75e28c; background:#102319; border:1px solid #245d33; border-radius:14px; padding:7px; font-size:10px; font-weight:700; } #support { color:#ffc18d; background:#2a1b15; border:1px solid #71402e; border-radius:14px; padding:7px; font-size:10px; font-weight:700; } #panel { background:#101217; border:1px solid #242832; border-radius:10px; } #caption { color:#817d8b; font-size:11px; font-weight:800; letter-spacing:2px; } #deviceName { color:#f8f5fb; font-size:28px; font-weight:600; } #muted { color:#777481; font-size:12px; } #facts { color:#ddd7e5; font-size:13px; line-height:1.7; padding-top:12px; } QTableWidget,QTextEdit,QComboBox { background:#0b0d11; border:1px solid #252a34; color:#eeeaf4; selection-background-color:#51261d; border-radius:5px; } QHeaderView::section { background:#151820; color:#888391; border:0; padding:8px; font-size:10px; font-weight:800; } QTableWidget::item { padding:9px; border-bottom:1px solid #1c2028; }");
 }
 QString MainWindow::backupPath() const { return rootPath_ + "/backup/network-address.json"; }
+QString MainWindow::snapshotPath() const { return rootPath_ + "/backup/system-before.json"; }
 void MainWindow::showRecords(const std::vector<IdentityRecord>& records) { table_->setRowCount(0); QString computer, cpu, motherboard, uuid, machineGuid, tpm; for (const auto& item : records) { int row = table_->rowCount(); table_->insertRow(row); table_->setItem(row, 0, new QTableWidgetItem(item.category)); table_->setItem(row, 1, new QTableWidgetItem(item.name)); table_->setItem(row, 2, new QTableWidgetItem(item.value)); if (item.name == "Computer name") computer = item.value; if (item.name == "ProcessorNameString") cpu = item.value; if (item.category == "Motherboard" && item.name == "Product") motherboard = item.value; if (item.name == "System UUID") uuid = item.value; if (item.name == "MachineGuid") machineGuid = item.value; if (item.category == "TPM") tpm = item.value; } deviceName_->setText(computer.isEmpty() ? "Windows device" : computer); deviceSubtitle_->setText(motherboard.isEmpty() ? "Verified hardware profile" : motherboard); auto* facts = findChild<QLabel*>("facts"); if (facts) facts->setText(QString("Motherboard model:\n%1\n\nCPU:\n%2\n\nSystem UUID:\n%3\n\nWindows MachineGuid:\n%4\n\nTPM state:\n%5").arg(motherboard.isEmpty() ? "Not reported" : motherboard, cpu.isEmpty() ? "Not reported" : cpu, uuid.isEmpty() ? "Not exposed by SMBIOS/WMI" : uuid, machineGuid.isEmpty() ? "Not reported" : machineGuid, tpm.isEmpty() ? "Not exposed by WMI/TBS" : tpm)); }
 void MainWindow::scanHardware() { records_ = inventory_.scan(); showRecords(records_); adapters_->clear(); for (const auto& item : records_) if (item.category == "Network" && item.name.endsWith(" GUID")) adapters_->addItem(item.name, item.value); OperationResult result{!records_.empty(), records_.empty() ? "No identity records were returned." : QString("Loaded %1 verified identifiers and serial values.").arg(records_.size())}; logger_.write("SCAN HARDWARE", result); status_->append(result.message); }
 void MainWindow::checkCompatibility() { if (records_.empty()) scanHardware(); int configurable = 0; for (const auto& item : records_) if (item.mutability == Mutability::SupportedConfiguration) ++configurable; OperationResult result{true, QString("Compatibility review: %1 supported configuration candidates. Hardware, firmware, TPM, storage, UUID and Windows IDs remain read-only.").arg(configurable)}; logger_.write("CHECK COMPATIBILITY", result); status_->append(result.message); }
 void MainWindow::generateConfiguration() { if (records_.empty()) scanHardware(); if (adapters_->currentData().toString().isEmpty() && adapters_->count() > 0) adapters_->setCurrentIndex(0); plan_ = NetworkConfiguration::generatePlan(adapters_->currentData().toString()); applyButton_->setEnabled(plan_.valid); OperationResult result{plan_.valid, plan_.valid ? plan_.detail : "No network adapter exposes a usable GUID for supported configuration."}; logger_.write("GENERATE CONFIGURATION", result); status_->append(result.message); }
 void MainWindow::applyChanges() { if (QMessageBox::question(this, "Confirm supported configuration", "Apply the selected adapter driver's NetworkAddress setting? A backup will be written first. No adapter will be restarted automatically.") != QMessageBox::Yes) return; auto result = NetworkConfiguration::apply(plan_, backupPath()); logger_.write("APPLY CHANGES", result); status_->append(result.message); }
-void MainWindow::verifyChanges() { auto result = NetworkConfiguration::verify(plan_); logger_.write("VERIFY", result); status_->append(result.message); }
-void MainWindow::backupConfiguration() { OperationResult result{plan_.valid, plan_.valid ? "A backup is created automatically before Apply Changes." : "Generate a configuration first; no supported setting is selected."}; logger_.write("BACKUP", result); status_->append(result.message); }
+void MainWindow::verifyChanges() {
+    if (records_.empty()) scanHardware();
+    auto networkResult = NetworkConfiguration::verify(plan_);
+    if (!beforeSnapshot_.fields.empty()) {
+        const auto after = PersistenceVerification::fromRecords(QStringLiteral("after"), QStringLiteral("After operation"), records_);
+        const auto comparisons = PersistenceVerification::compare(beforeSnapshot_, after, false);
+        int changed = 0;
+        for (const auto& item : comparisons) if (item.status == VerificationStatus::Changed) ++changed;
+        networkResult.message += QStringLiteral(" Snapshot verification: %1 changed field(s); reboot is required before persistence can be classified.").arg(changed);
+        networkResult.success = networkResult.success && changed >= 0;
+    }
+    logger_.write("VERIFY", networkResult); status_->append(networkResult.message);
+}
+void MainWindow::backupConfiguration() {
+    if (records_.empty()) scanHardware();
+    beforeSnapshot_ = PersistenceVerification::fromRecords(QStringLiteral("before"), QStringLiteral("Before operation"), records_);
+    QString error;
+    const bool saved = SnapshotStore::write(snapshotPath(), beforeSnapshot_, &error);
+    OperationResult result{saved, saved ? QStringLiteral("Snapshot BEFORE saved. It contains %1 verified fields and is used for independent verification.").arg(beforeSnapshot_.fields.size()) : QStringLiteral("Could not save the BEFORE snapshot: %1").arg(error)};
+    logger_.write("BACKUP", result); status_->append(result.message);
+}
 void MainWindow::restoreConfiguration() { auto result = NetworkConfiguration::restore(adapters_->currentData().toString(), backupPath()); logger_.write("RESTORE", result); status_->append(result.message); }
 void MainWindow::viewLogs() { status_->setPlainText(logger_.readAll()); }

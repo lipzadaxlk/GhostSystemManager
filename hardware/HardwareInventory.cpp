@@ -113,9 +113,18 @@ QString presentTpmDevice() {
     for (DWORD index = 0; ; ++index) {
         SP_DEVINFO_DATA data{}; data.cbSize = sizeof(data);
         if (!SetupDiEnumDeviceInfo(devices, index, &data)) break;
-        wchar_t name[256]{}; DWORD type = 0, bytes = 0;
-        if (SetupDiGetDeviceRegistryPropertyW(devices, &data, SPDRP_FRIENDLYNAME, &type, reinterpret_cast<PBYTE>(name), sizeof(name), &bytes) && QString::fromWCharArray(name).contains(QStringLiteral("Trusted Platform Module"), Qt::CaseInsensitive)) {
-            result = QString::fromWCharArray(name).trimmed();
+        DWORD type = 0;
+        DWORD required = 0;
+        SetupDiGetDeviceRegistryPropertyW(devices, &data, SPDRP_FRIENDLYNAME, &type, nullptr, 0, &required);
+        if (required == 0 || required > 64u * 1024u) continue;
+        std::vector<BYTE> buffer(static_cast<size_t>(required) + sizeof(wchar_t), 0);
+        DWORD capacity = static_cast<DWORD>(buffer.size());
+        DWORD written = 0;
+        if (!SetupDiGetDeviceRegistryPropertyW(devices, &data, SPDRP_FRIENDLYNAME, &type, buffer.data(), capacity, &written)) continue;
+        const wchar_t* name = reinterpret_cast<const wchar_t*>(buffer.data());
+        QString friendly = QString::fromWCharArray(name).trimmed();
+        if (friendly.contains(QStringLiteral("Trusted Platform Module"), Qt::CaseInsensitive)) {
+            result = friendly;
             break;
         }
     }
