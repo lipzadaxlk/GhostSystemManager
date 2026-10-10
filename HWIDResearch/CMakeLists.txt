@@ -19,4 +19,6 @@ add_executable(HWIDResearchIdentityFlowProbe
     VirtualIdentity/SnapshotManager.cpp
 )
 target_include_directories(HWIDResearchIdentityFlowProbe PRIVATE VirtualIdentity)
+add_executable(HWIDResearchHypervisorProbe tests/HypervisorProbe.cpp VirtualIdentity/HypervisorBackend.cpp)
+target_include_directories(HWIDResearchHypervisorProbe PRIVATE VirtualIdentity)
 
