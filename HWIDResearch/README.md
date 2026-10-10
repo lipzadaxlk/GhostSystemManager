@@ -6,6 +6,12 @@ Pesquisa isolada de identidade virtual sintética e comunicação user-mode/KMDF
 
 O driver não altera SMBIOS, UUID, discos, MAC, firmware, Registro ou estruturas internas do Windows. O IOCTL retorna apenas diagnósticos e textos sintéticos. O loader não instala nada por padrão e não contém mapper manual, BYOVD, exploração, bypass de assinatura ou interação com anti-cheat.
 
+## Perfis virtuais e verificação
+
+`HWIDResearchIdentityFlowProbe.exe` gera um perfil persistente com UUID, BIOS, baseboard, armazenamento, rede, GPU, volume e instalação. O perfil é um artefato de teste; ele não é injetado em processos nem substitui a identidade do host. A comparação recebe observações coletadas no convidado por uma fonte identificada e retorna `ALTERADO`, `NAO ALTERADO`, `NAO SUPORTADO` ou `VERIFICACAO FALHOU`. Um valor armazenado pelo próprio perfil nunca é considerado observação.
+
+O hipervisor deve ser configurado explicitamente pelo operador, usando somente sua documentação. Exemplos de preparação em uma VM descartável: gerar um novo UUID da VM, criar um novo disco virtual, gerar um novo MAC virtual e instalar o Windows novamente. O projeto não executa esses comandos automaticamente e não altera a VM do host.
+
 ## Estado do ambiente
 
 O computador de desenvolvimento possui Windows SDK, MSVC e CMake, mas não possui o WDK/KMDF instalado. Por isso, o código e o projeto `Driver/HWIDResearch.vcxproj` estão preparados para compilação em uma VM de testes com WDK, enquanto os componentes user-mode são compiláveis localmente.

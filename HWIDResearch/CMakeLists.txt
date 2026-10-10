@@ -11,4 +11,12 @@ target_include_directories(HWIDResearchVirtualIdentityProbe PRIVATE VirtualIdent
 add_executable(HWIDResearchHardwareProbe tests/HardwareProbe.cpp Hardware/HardwareInventory.cpp Hardware/SMBIOS.cpp Hardware/Storage.cpp Hardware/Network.cpp Hardware/GPU.cpp)
 target_include_directories(HWIDResearchHardwareProbe PRIVATE Hardware)
 target_link_libraries(HWIDResearchHardwareProbe PRIVATE iphlpapi)
+add_executable(HWIDResearchIdentityFlowProbe
+    tests/IdentityFlowProbe.cpp
+    VirtualIdentity/IdentityProfile.cpp
+    VirtualIdentity/IdentityGenerator.cpp
+    VirtualIdentity/VerificationEngine.cpp
+    VirtualIdentity/SnapshotManager.cpp
+)
+target_include_directories(HWIDResearchIdentityFlowProbe PRIVATE VirtualIdentity)
 
