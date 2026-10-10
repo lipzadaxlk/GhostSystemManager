@@ -5,6 +5,7 @@
 #include <initguid.h>
 #include <wdm.h>
 #include <ntstrsafe.h>
+#include <wdmsec.h>
 #include "../Shared/Protocol.h"
 
 DEFINE_GUID(GUID_DEVINTERFACE_HWID_RESEARCH, 0x4f86d8c1, 0x2eb0, 0x4bb8, 0x91, 0x52, 0x8a, 0x0c, 0x6b, 0x2d, 0x77, 0x31);

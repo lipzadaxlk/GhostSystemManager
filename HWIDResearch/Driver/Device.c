@@ -4,6 +4,9 @@ NTSTATUS HwidEvtDeviceAdd(WDFDRIVER driver, PWDFDEVICE_INIT deviceInit) {
     UNREFERENCED_PARAMETER(driver);
     WdfDeviceInitSetDeviceType(deviceInit, FILE_DEVICE_UNKNOWN);
     WdfDeviceInitSetExclusive(deviceInit, FALSE);
+    DECLARE_CONST_UNICODE_STRING(sddl, SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R);
+    NTSTATUS securityStatus = WdfDeviceInitAssignSDDLString(deviceInit, &sddl);
+    if (!NT_SUCCESS(securityStatus)) return securityStatus;
     WDFDEVICE device;
     WDF_OBJECT_ATTRIBUTES attributes;
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);

@@ -31,7 +31,7 @@ int wmain(int argc, wchar_t** argv) {
         std::wcout << L"Version: " << diagnostics.driverVersion << L"\nSynthetic UUID: " << identity.systemUuid << L"\nSynthetic MAC: " << identity.macAddress << L"\nSynthetic disk: " << identity.diskId << L"\n"; return 0;
     }
     std::wcout << L"HWIDResearch loader (status-only by default).\n";
-    std::wcout << L"Usage: HWIDResearchLoader.exe --status | --install <absolute-sys-path> | --remove\n";
+    std::wcout << L"Usage: HWIDResearchLoader.exe --status | --vms | --apply <vm-name-or-uuid> | --install <absolute-sys-path> | --remove\n";
     std::wcout << L"Installation is intentionally not automatic; use the documented WDK test VM procedure.\n";
     return 0;
 }
