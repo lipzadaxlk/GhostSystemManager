@@ -1,4 +1,7 @@
 build/
+**/build/
+out/
+**/out/
 release/*.exe
 release/*.dll
 release/*.json
@@ -13,3 +16,37 @@ installer/*.exe
 installer/*.rar
 *.user
 *.log
+
+# Local research checkouts are untrusted third-party sources and are not part
+# of the distributable GhostSystemManager source tree.
+research/repositories/
+
+# Temporary/editor/cache files
+*.tmp
+*.temp
+*.cache
+*.bak
+*.swp
+.vs/
+.idea/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Local credentials and secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+*.crt
+credentials*
+secrets*
+tokens*
+*.token
+*.secret
